@@ -5,6 +5,7 @@ pub mod discover;
 pub mod distribute;
 pub mod doctor;
 pub mod library;
+pub mod mcp;
 pub mod status;
 pub mod wizard;
 
@@ -30,8 +31,7 @@ pub fn run(cli: Cli) -> Result<()> {
         Command::Status => status::show(&config)?,
         Command::Doctor => doctor::diagnose(&config, cli.dry_run)?,
         Command::Serve => {
-            tokio::runtime::Runtime::new()?
-                .block_on(serve_mcp(&config))?;
+            tokio::runtime::Runtime::new()?.block_on(mcp::serve(config))?;
         }
         Command::List => list(&config)?,
         Command::Config { path } => show_config(&config, path)?,
@@ -65,21 +65,12 @@ fn sync(config: &Config, dry_run: bool, verbose: bool) -> Result<()> {
 
     // 3. Distribute to targets
     let mut distribute_results = Vec::new();
-    let targets = [
-        ("antigravity", &config.targets.antigravity),
-        ("codex", &config.targets.codex),
-        ("openclaw", &config.targets.openclaw),
-    ];
-
-    for (name, target) in &targets {
-        if let Some(t) = target {
-            if verbose {
-                eprintln!("{}", style(format!("Distributing to {}...", name)).dim());
-            }
-            let result =
-                distribute::distribute_to_target(&config.library_dir, name, t, dry_run)?;
-            distribute_results.push(result);
+    for (name, target) in config.targets.iter() {
+        if verbose {
+            eprintln!("{}", style(format!("Distributing to {}...", name)).dim());
         }
+        let result = distribute::distribute_to_target(&config.library_dir, name, target, dry_run)?;
+        distribute_results.push(result);
     }
 
     // 4. Cleanup stale links
@@ -160,11 +151,5 @@ fn show_config(config: &Config, path_only: bool) -> Result<()> {
         let toml_str = toml::to_string_pretty(config)?;
         println!("{}", toml_str);
     }
-    Ok(())
-}
-
-/// Start the MCP server (placeholder — real impl in skync-mcp crate).
-async fn serve_mcp(_config: &Config) -> Result<()> {
-    eprintln!("MCP server not yet implemented. Use the skync-mcp binary instead.");
     Ok(())
 }

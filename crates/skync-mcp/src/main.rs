@@ -1,4 +1,7 @@
-fn main() {
-    eprintln!("skync-mcp: MCP server not yet implemented");
-    std::process::exit(1);
+use skync::config::Config;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let config = Config::load_or_default(None)?;
+    skync::mcp::serve(config).await
 }
