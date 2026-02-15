@@ -16,20 +16,12 @@ pub fn diagnose(config: &Config, dry_run: bool) -> Result<()> {
 
     // Check targets
     println!("{}", style("Checking targets...").bold());
-    let targets = [
-        ("antigravity", &config.targets.antigravity),
-        ("codex", &config.targets.codex),
-        ("openclaw", &config.targets.openclaw),
-    ];
-
-    for (name, target) in &targets {
-        if let Some(t) = target {
-            if t.enabled {
-                if let Some(ref skills_dir) = t.skills_dir {
-                    let target_issues = check_target_dir(name, skills_dir, &config.library_dir)?;
-                    total_issues += target_issues;
-                }
-            }
+    for (name, t) in config.targets.iter() {
+        if t.enabled
+            && let Some(ref skills_dir) = t.skills_dir
+        {
+            let target_issues = check_target_dir(name, skills_dir, &config.library_dir)?;
+            total_issues += target_issues;
         }
     }
 
@@ -61,19 +53,16 @@ pub fn diagnose(config: &Config, dry_run: bool) -> Result<()> {
                 );
             }
 
-            for (name, target) in &targets {
-                if let Some(t) = target {
-                    if let Some(ref skills_dir) = t.skills_dir {
-                        let removed =
-                            cleanup::cleanup_target(skills_dir, &config.library_dir, false)?;
-                        if removed > 0 {
-                            println!(
-                                "  {} Removed {} stale symlink(s) from {}",
-                                style("fixed").green(),
-                                removed,
-                                name
-                            );
-                        }
+            for (name, t) in config.targets.iter() {
+                if let Some(ref skills_dir) = t.skills_dir {
+                    let removed = cleanup::cleanup_target(skills_dir, &config.library_dir, false)?;
+                    if removed > 0 {
+                        println!(
+                            "  {} Removed {} stale symlink(s) from {}",
+                            style("fixed").green(),
+                            removed,
+                            name
+                        );
                     }
                 }
             }

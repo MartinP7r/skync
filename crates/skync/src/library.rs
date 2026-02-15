@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use std::os::unix::fs as unix_fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::discover::DiscoveredSkill;
 
@@ -76,11 +76,6 @@ pub fn consolidate(
     Ok(result)
 }
 
-/// Get the current library directory path, expanded.
-pub fn library_path(library_dir: &Path) -> PathBuf {
-    library_dir.to_path_buf()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -117,8 +112,8 @@ mod tests {
         let library = TempDir::new().unwrap();
         let skill = make_skill(source.path(), "my-skill");
 
-        consolidate(&[skill.clone()], library.path(), false).unwrap();
-        let result = consolidate(&[skill], library.path(), false).unwrap();
+        consolidate(std::slice::from_ref(&skill), library.path(), false).unwrap();
+        let result = consolidate(std::slice::from_ref(&skill), library.path(), false).unwrap();
         assert_eq!(result.created, 0);
         assert_eq!(result.unchanged, 1);
     }
@@ -146,7 +141,7 @@ mod tests {
         consolidate(&[skill1], library.path(), false).unwrap();
 
         let skill2 = make_skill(source2.path(), "my-skill");
-        let result = consolidate(&[skill2.clone()], library.path(), false).unwrap();
+        let result = consolidate(std::slice::from_ref(&skill2), library.path(), false).unwrap();
         assert_eq!(result.updated, 1);
 
         let actual_target = std::fs::read_link(library.path().join("my-skill")).unwrap();

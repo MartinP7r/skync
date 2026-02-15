@@ -41,10 +41,12 @@ fn distribute_symlinks(
     target: &TargetConfig,
     dry_run: bool,
 ) -> Result<DistributeResult> {
-    let skills_dir = target
-        .skills_dir
-        .as_ref()
-        .with_context(|| format!("target '{}' uses symlink method but has no skills_dir", target_name))?;
+    let skills_dir = target.skills_dir.as_ref().with_context(|| {
+        format!(
+            "target '{}' uses symlink method but has no skills_dir",
+            target_name
+        )
+    })?;
 
     std::fs::create_dir_all(skills_dir)
         .with_context(|| format!("failed to create target dir {}", skills_dir.display()))?;
@@ -104,10 +106,12 @@ fn distribute_mcp(
     target: &TargetConfig,
     dry_run: bool,
 ) -> Result<DistributeResult> {
-    let mcp_config_path = target
-        .mcp_config
-        .as_ref()
-        .with_context(|| format!("target '{}' uses mcp method but has no mcp_config", target_name))?;
+    let mcp_config_path = target.mcp_config.as_ref().with_context(|| {
+        format!(
+            "target '{}' uses mcp method but has no mcp_config",
+            target_name
+        )
+    })?;
 
     let mut result = DistributeResult {
         target_name: target_name.to_string(),
@@ -131,11 +135,11 @@ fn distribute_mcp(
         .or_insert_with(|| serde_json::json!({}));
 
     // Check if skync entry already exists and is correct
-    if let Some(existing) = servers.get("skync") {
-        if existing.get("command").and_then(|v| v.as_str()) == Some("skync-mcp") {
-            result.unchanged = 1;
-            return Ok(result);
-        }
+    if let Some(existing) = servers.get("skync")
+        && existing.get("command").and_then(|v| v.as_str()) == Some("skync-mcp")
+    {
+        result.unchanged = 1;
+        return Ok(result);
     }
 
     // Add/update the skync MCP server entry
@@ -165,7 +169,6 @@ fn distribute_mcp(
 mod tests {
     use super::*;
     use crate::config::DistributionMethod;
-    use std::os::unix::fs as unix_fs;
     use tempfile::TempDir;
 
     fn setup_library(dir: &Path, skill_names: &[&str]) {
@@ -189,8 +192,7 @@ mod tests {
             mcp_config: None,
         };
 
-        let result =
-            distribute_to_target(library.path(), "test", &target, false).unwrap();
+        let result = distribute_to_target(library.path(), "test", &target, false).unwrap();
         assert_eq!(result.linked, 2);
         assert!(target_dir.path().join("skill-a").is_symlink());
         assert!(target_dir.path().join("skill-b").is_symlink());
@@ -210,8 +212,7 @@ mod tests {
         };
 
         distribute_to_target(library.path(), "test", &target, false).unwrap();
-        let result =
-            distribute_to_target(library.path(), "test", &target, false).unwrap();
+        let result = distribute_to_target(library.path(), "test", &target, false).unwrap();
         assert_eq!(result.linked, 0);
         assert_eq!(result.unchanged, 1);
     }
@@ -226,8 +227,7 @@ mod tests {
             mcp_config: None,
         };
 
-        let result =
-            distribute_to_target(library.path(), "test", &target, false).unwrap();
+        let result = distribute_to_target(library.path(), "test", &target, false).unwrap();
         assert_eq!(result.linked, 0);
     }
 
@@ -244,8 +244,7 @@ mod tests {
             mcp_config: Some(mcp_path.clone()),
         };
 
-        let result =
-            distribute_to_target(library.path(), "codex", &target, false).unwrap();
+        let result = distribute_to_target(library.path(), "codex", &target, false).unwrap();
         assert_eq!(result.linked, 1);
 
         let content = std::fs::read_to_string(&mcp_path).unwrap();

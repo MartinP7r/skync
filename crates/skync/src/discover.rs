@@ -58,7 +58,7 @@ pub fn discover_all(config: &Config) -> Result<Vec<DiscoveredSkill>> {
 }
 
 /// Discover skills from a single source.
-fn discover_source(source: &Source) -> Result<Vec<DiscoveredSkill>> {
+pub fn discover_source(source: &Source) -> Result<Vec<DiscoveredSkill>> {
     match source.source_type {
         SourceType::ClaudePlugins => discover_claude_plugins(source),
         SourceType::Directory => discover_directory(source),
@@ -79,10 +79,10 @@ fn discover_claude_plugins(source: &Source) -> Result<Vec<DiscoveredSkill>> {
             .parent()
             .map(|p| p.join("installed_plugins.json"));
 
-        if let Some(ref path) = parent_json {
-            if path.exists() {
-                return discover_claude_plugins_from_json(path, &source.name);
-            }
+        if let Some(ref path) = parent_json
+            && path.exists()
+        {
+            return discover_claude_plugins_from_json(path, &source.name);
         }
 
         eprintln!(
@@ -147,16 +147,16 @@ fn scan_for_skills(dir: &Path, source_name: &str) -> Result<Vec<DiscoveredSkill>
         .into_iter()
         .filter_map(|e| e.ok())
     {
-        if entry.file_name() == "SKILL.md" && entry.file_type().is_file() {
-            if let Some(skill_dir) = entry.path().parent() {
-                if let Some(name) = skill_dir.file_name().and_then(|n| n.to_str()) {
-                    skills.push(DiscoveredSkill {
-                        name: name.to_string(),
-                        path: skill_dir.to_path_buf(),
-                        source_name: source_name.to_string(),
-                    });
-                }
-            }
+        if entry.file_name() == "SKILL.md"
+            && entry.file_type().is_file()
+            && let Some(skill_dir) = entry.path().parent()
+            && let Some(name) = skill_dir.file_name().and_then(|n| n.to_str())
+        {
+            skills.push(DiscoveredSkill {
+                name: name.to_string(),
+                path: skill_dir.to_path_buf(),
+                source_name: source_name.to_string(),
+            });
         }
     }
 

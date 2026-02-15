@@ -1,20 +1,17 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use console::style;
 use dialoguer::{Confirm, Input, MultiSelect, Select};
 use std::path::PathBuf;
 
 use crate::config::{
-    default_config_path, expand_tilde, Config, DistributionMethod, Source, SourceType,
-    TargetConfig, Targets,
+    Config, DistributionMethod, Source, SourceType, TargetConfig, Targets, default_config_path,
+    expand_tilde,
 };
 
 /// Run the interactive setup wizard.
 pub fn run(dry_run: bool) -> Result<Config> {
     println!();
-    println!(
-        "{}",
-        style("Welcome to skync setup!").bold().cyan()
-    );
+    println!("{}", style("Welcome to skync setup!").bold().cyan());
     println!("This wizard will help you configure skill sources and targets.");
     println!();
 
@@ -73,7 +70,7 @@ fn configure_sources() -> Result<Vec<Source>> {
         println!("Found skills in these locations:");
         let labels: Vec<String> = known_sources
             .iter()
-            .map(|s| format!("{} ({})", s.path.display(), format!("{:?}", s.source_type).to_lowercase()))
+            .map(|s| format!("{} ({})", s.path.display(), s.source_type))
             .collect();
 
         let selections = MultiSelect::new()
@@ -135,9 +132,7 @@ fn configure_library() -> Result<PathBuf> {
     let path = if selection == 0 {
         default
     } else {
-        let custom: String = Input::new()
-            .with_prompt("Library path")
-            .interact_text()?;
+        let custom: String = Input::new().with_prompt("Library path").interact_text()?;
         expand_tilde(&PathBuf::from(custom))
     };
 
@@ -159,9 +154,7 @@ fn configure_targets() -> Result<Targets> {
     for idx in selections {
         match idx {
             0 => {
-                let default_path = dirs::home_dir()
-                    .unwrap()
-                    .join(".gemini/antigravity/skills");
+                let default_path = dirs::home_dir().unwrap().join(".gemini/antigravity/skills");
                 let path: String = Input::new()
                     .with_prompt("Antigravity skills directory")
                     .default(default_path.display().to_string())

@@ -44,6 +44,15 @@ pub enum SourceType {
     Directory,
 }
 
+impl std::fmt::Display for SourceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SourceType::ClaudePlugins => write!(f, "claude-plugins"),
+            SourceType::Directory => write!(f, "directory"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Targets {
     #[serde(default)]
@@ -52,6 +61,19 @@ pub struct Targets {
     pub codex: Option<TargetConfig>,
     #[serde(default)]
     pub openclaw: Option<TargetConfig>,
+}
+
+impl Targets {
+    /// Iterate over all configured targets as (name, config) pairs.
+    pub fn iter(&self) -> impl Iterator<Item = (&str, &TargetConfig)> {
+        [
+            ("antigravity", self.antigravity.as_ref()),
+            ("codex", self.codex.as_ref()),
+            ("openclaw", self.openclaw.as_ref()),
+        ]
+        .into_iter()
+        .filter_map(|(name, config)| config.map(|c| (name, c)))
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -99,8 +121,7 @@ impl Config {
 
     /// Save config to file, creating parent directories as needed.
     pub fn save(&self, path: &Path) -> Result<()> {
-        let content = toml::to_string_pretty(self)
-            .context("failed to serialize config")?;
+        let content = toml::to_string_pretty(self).context("failed to serialize config")?;
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)
                 .with_context(|| format!("failed to create {}", parent.display()))?;

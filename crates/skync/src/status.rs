@@ -24,16 +24,13 @@ pub fn show(config: &Config) -> Result<()> {
         println!("  (none configured)");
     } else {
         for source in &config.sources {
-            let skills = discover::discover_all(&Config {
-                sources: vec![source.clone()],
-                exclude: Vec::new(),
-                ..config.clone()
-            })
-            .unwrap_or_default();
+            let count = discover::discover_source(source)
+                .map(|s| s.len())
+                .unwrap_or(0);
             println!(
                 "  {:<40} {} skills",
                 style(source.path.display()).dim(),
-                style(skills.len()).cyan()
+                style(count).cyan()
             );
         }
     }
@@ -41,23 +38,15 @@ pub fn show(config: &Config) -> Result<()> {
 
     // Targets
     println!("{}", style("Targets:").bold());
-    let targets = [
-        ("antigravity", &config.targets.antigravity),
-        ("codex", &config.targets.codex),
-        ("openclaw", &config.targets.openclaw),
-    ];
-
     let mut any_target = false;
-    for (name, target) in &targets {
-        if let Some(t) = target {
-            any_target = true;
-            let status = if t.enabled {
-                style("enabled").green()
-            } else {
-                style("disabled").dim()
-            };
-            println!("  {:<20} {}", style(name).bold(), status);
-        }
+    for (name, t) in config.targets.iter() {
+        any_target = true;
+        let status = if t.enabled {
+            style("enabled").green()
+        } else {
+            style("disabled").dim()
+        };
+        println!("  {:<20} {}", style(name).bold(), status);
     }
     if !any_target {
         println!("  (none configured)");
@@ -92,7 +81,9 @@ fn count_broken_symlinks(dir: &Path) -> usize {
                 .filter_map(|e| e.ok())
                 .filter(|e| {
                     let path = e.path();
-                    path.is_symlink() && !std::fs::read_link(&path).map(|t| t.exists()).unwrap_or(true)
+                    // is_symlink() checks the link itself; exists() follows it —
+                    // a symlink that exists but whose target doesn't yields true + false
+                    path.is_symlink() && !path.exists()
                 })
                 .count()
         })
