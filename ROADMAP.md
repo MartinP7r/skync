@@ -10,6 +10,8 @@
 - **Expand wizard auto-discovery**: Add `~/.copilot/skills/`, `.github/skills/`, `$HOME/.agents/skills/`, `.cursor/`, `.gemini/antigravity/` to the wizard's known source locations
 - **Fix `installed_plugins.json` v2 parsing**: Current parser expects a flat JSON array (v1); v2 wraps plugins in `{ "version": 2, "plugins": { "name@registry": [...] } }` — discovery silently finds nothing. Support both formats going forward.
 - **Finalize tool name**: Decide on final name before v0.2, when the name gets written into targets' MCP configs and becomes harder to change.
+- **Improve doc comments for `cargo doc`**: Add module-level `//!` docs, expand struct/function docs, add `# Examples` to key public APIs.
+- **GitHub Pages deployment**: Add CI workflow to build and deploy mdBook + `cargo doc` to GitHub Pages.
 
 ## v0.2 — Connector Architecture
 
@@ -32,13 +34,49 @@ The current model hardcodes targets as struct fields and keeps source/target log
 
 ## v0.3.x — Skill Validation & Linting
 
-Expand the basic validation idea into a real lint pass that catches cross-tool compatibility issues:
+Add YAML frontmatter parsing and a `skync lint` command that catches cross-tool compatibility issues. See [Frontmatter Compatibility](docs/src/frontmatter-compatibility.md) for the full spec comparison.
 
-- **Multiline YAML description bug detection**: Warn when a SKILL.md description uses multiline YAML that Claude Code's parser silently truncates
-- **Description length validation**: Enforce spec limits (1024 chars Claude Code, 500 chars Copilot) and warn when exceeded
-- **Skill name vs directory name mismatch**: Flag when the `name:` frontmatter field doesn't match the containing directory name
-- **Body size warnings**: Warn when skill body exceeds target limits (6000 chars for Windsurf, ~5000 tokens general recommendation)
+### Frontmatter Parsing
+
+- Add `serde_yaml` dependency
+- Create a `Skill` struct with typed fields for the base standard (name, description, license, compatibility, metadata, allowed-tools)
+- Parse frontmatter during discovery (enrich `DiscoveredSkill`)
+- Store parsed metadata for validation, MCP responses, and status display
+
+### `skync lint` Command
+
+Validation checks ordered by severity:
+
+**Errors** (skill will break on one or more targets):
+- Missing required `name` field
+- Missing required `description` field
+- `name` doesn't match containing directory name
+- `name` exceeds 64 chars or uses invalid characters (must be lowercase letters, numbers, hyphens)
+- `description` exceeds 1024 chars
+
+**Warnings** (cross-platform compatibility issues):
+- Non-standard fields (`version`, `category`, `tags`, `last-updated`) — suggest moving to `metadata`
+- Platform-specific fields used (`disable-model-invocation`, `excludeAgent`, etc.) — note which target they're for
+- Multiline YAML description without block scalar indicator (`|`) — will break on Claude Code
+- `description` exceeds 500 chars (Copilot limit)
+- Body exceeds 6000 chars (Windsurf limit)
 - **Hidden Unicode Tag codepoint scanning**: Detect U+E0001–U+E007F tag characters that can smuggle invisible instructions (security)
+
+**Info** (best practices):
+- `allowed-tools` used (experimental, may not be supported everywhere)
+- Body exceeds ~5000 tokens (general recommendation)
+
+### Enhance Existing Commands
+
+- **`skync doctor`**: Add frontmatter health checks alongside existing symlink diagnostics — parse all library skills and report validation results
+- **`skync status`**: Show parsed frontmatter summary per skill — name, description (truncated), field count, and any validation issues inline
+
+### Target-Aware Warnings (Future)
+
+Requires the v0.2 connector architecture. When distributing to specific targets, warn about:
+- Fields unsupported by that target
+- Description length exceeding target's limit
+- Body syntax incompatible with target (e.g., XML tags, `!command`, `$ARGUMENTS`)
 
 ## v0.4 — Portable Library
 
@@ -68,7 +106,6 @@ Make the skill library reproducible across machines via a lockfile and per-machi
 
 - **Plugin registry**: Browse and install community skill packs
 - **Conflict resolution UI**: Interactive merge when skills collide
-- **Skill validation**: Lint SKILL.md for common issues (missing frontmatter, broken links)
 - **Shell completions**: Generate completions for bash, zsh, fish
 - **Homebrew formula**: `brew install skync`
 - **Backup snapshots**: Optional tarball backup of library state before destructive operations

@@ -1,4 +1,4 @@
-.PHONY: build release check test lint fmt clean install
+.PHONY: build release check test lint fmt clean install docs docs-serve
 
 build:
 	cargo build
@@ -30,3 +30,9 @@ install:
 
 ci: fmt-check lint test
 	@echo "All checks passed"
+
+docs:
+	mdbook build
+
+docs-serve:
+	mdbook serve

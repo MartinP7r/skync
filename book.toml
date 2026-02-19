@@ -1,0 +1,9 @@
+[book]
+title = "skync"
+description = "Sync AI coding skills across tools"
+authors = ["Martin Pfundmair"]
+language = "en"
+src = "docs/src"
+
+[build]
+build-dir = "docs/book"
