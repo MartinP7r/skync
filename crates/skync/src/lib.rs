@@ -118,7 +118,7 @@ fn sync(config: &Config, dry_run: bool, verbose: bool) -> Result<()> {
         println!(
             "  {}: {} linked, {} unchanged",
             style(&dr.target_name).bold(),
-            style(dr.linked).cyan(),
+            style(dr.changed).cyan(),
             dr.unchanged
         );
     }

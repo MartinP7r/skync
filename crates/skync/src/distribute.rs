@@ -10,7 +10,7 @@ use crate::paths::symlink_points_to;
 /// Result of distributing skills to a single target.
 #[derive(Debug, Default)]
 pub struct DistributeResult {
-    pub linked: usize,
+    pub changed: usize,
     pub unchanged: usize,
     pub target_name: String,
 }
@@ -95,7 +95,7 @@ fn distribute_symlinks(
                 )
             })?;
         }
-        result.linked += 1;
+        result.changed += 1;
     }
 
     Ok(result)
@@ -159,7 +159,7 @@ fn distribute_mcp(
             .with_context(|| format!("failed to write {}", mcp_config_path.display()))?;
     }
 
-    result.linked = 1;
+    result.changed = 1;
     Ok(result)
 }
 
@@ -191,7 +191,7 @@ mod tests {
         };
 
         let result = distribute_to_target(library.path(), "test", &target, false).unwrap();
-        assert_eq!(result.linked, 2);
+        assert_eq!(result.changed, 2);
         assert!(target_dir.path().join("skill-a").is_symlink());
         assert!(target_dir.path().join("skill-b").is_symlink());
     }
@@ -211,7 +211,7 @@ mod tests {
 
         distribute_to_target(library.path(), "test", &target, false).unwrap();
         let result = distribute_to_target(library.path(), "test", &target, false).unwrap();
-        assert_eq!(result.linked, 0);
+        assert_eq!(result.changed, 0);
         assert_eq!(result.unchanged, 1);
     }
 
@@ -250,7 +250,7 @@ mod tests {
             result.unchanged, 1,
             "relative symlink should be recognized as matching"
         );
-        assert_eq!(result.linked, 0);
+        assert_eq!(result.changed, 0);
     }
 
     #[test]
@@ -264,7 +264,7 @@ mod tests {
         };
 
         let result = distribute_to_target(library.path(), "test", &target, false).unwrap();
-        assert_eq!(result.linked, 0);
+        assert_eq!(result.changed, 0);
     }
 
     #[test]
@@ -281,7 +281,7 @@ mod tests {
         };
 
         let result = distribute_to_target(library.path(), "codex", &target, false).unwrap();
-        assert_eq!(result.linked, 1);
+        assert_eq!(result.changed, 1);
 
         let content = std::fs::read_to_string(&mcp_path).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
@@ -313,7 +313,7 @@ mod tests {
         };
 
         let result = distribute_to_target(library.path(), "codex", &target, false).unwrap();
-        assert_eq!(result.linked, 1);
+        assert_eq!(result.changed, 1);
 
         // Verify both entries exist
         let content = std::fs::read_to_string(&mcp_path).unwrap();
@@ -369,7 +369,7 @@ mod tests {
         };
 
         let result = distribute_to_target(library.path(), "test", &target, true).unwrap();
-        assert_eq!(result.linked, 1); // counted but not created
+        assert_eq!(result.changed, 1); // counted but not created
         assert!(!nonexistent_target.exists());
     }
 
@@ -390,7 +390,7 @@ mod tests {
         };
 
         let result = distribute_to_target(library.path(), "test", &target, false).unwrap();
-        assert_eq!(result.linked, 0);
+        assert_eq!(result.changed, 0);
         assert_eq!(result.unchanged, 0);
 
         // The regular file should be unchanged
