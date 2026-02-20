@@ -33,9 +33,7 @@ pub fn distribute_to_target(
         TargetMethod::Symlink { skills_dir } => {
             distribute_symlinks(library_dir, target_name, skills_dir, dry_run)
         }
-        TargetMethod::Mcp { mcp_config } => {
-            distribute_mcp(target_name, mcp_config, dry_run)
-        }
+        TargetMethod::Mcp { mcp_config } => distribute_mcp(target_name, mcp_config, dry_run),
     }
 }
 

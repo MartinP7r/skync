@@ -135,15 +135,15 @@ impl TryFrom<RawTargetConfig> for TargetConfig {
     fn try_from(raw: RawTargetConfig) -> Result<Self> {
         let method = match raw.method {
             DistributionMethod::Symlink => {
-                let skills_dir = raw.skills_dir.ok_or_else(|| {
-                    anyhow::anyhow!("symlink target requires skills_dir")
-                })?;
+                let skills_dir = raw
+                    .skills_dir
+                    .ok_or_else(|| anyhow::anyhow!("symlink target requires skills_dir"))?;
                 TargetMethod::Symlink { skills_dir }
             }
             DistributionMethod::Mcp => {
-                let mcp_config = raw.mcp_config.ok_or_else(|| {
-                    anyhow::anyhow!("mcp target requires mcp_config")
-                })?;
+                let mcp_config = raw
+                    .mcp_config
+                    .ok_or_else(|| anyhow::anyhow!("mcp target requires mcp_config"))?;
                 TargetMethod::Mcp { mcp_config }
             }
         };
@@ -174,13 +174,18 @@ impl From<&TargetConfig> for RawTargetConfig {
 }
 
 impl Serialize for TargetConfig {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+    fn serialize<S: serde::Serializer>(
+        &self,
+        serializer: S,
+    ) -> std::result::Result<S::Ok, S::Error> {
         RawTargetConfig::from(self).serialize(serializer)
     }
 }
 
 impl<'de> Deserialize<'de> for TargetConfig {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
+    fn deserialize<D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> std::result::Result<Self, D::Error> {
         let raw = RawTargetConfig::deserialize(deserializer)?;
         TargetConfig::try_from(raw).map_err(serde::de::Error::custom)
     }
@@ -494,10 +499,7 @@ mod tests {
         let toml_str = toml::to_string_pretty(&tc).unwrap();
         let parsed: TargetConfig = toml::from_str(&toml_str).unwrap();
         assert!(parsed.enabled);
-        assert_eq!(
-            parsed.skills_dir(),
-            Some(Path::new("/tmp/skills"))
-        );
+        assert_eq!(parsed.skills_dir(), Some(Path::new("/tmp/skills")));
         assert!(parsed.mcp_config().is_none());
     }
 
@@ -512,10 +514,7 @@ mod tests {
         let toml_str = toml::to_string_pretty(&tc).unwrap();
         let parsed: TargetConfig = toml::from_str(&toml_str).unwrap();
         assert!(parsed.enabled);
-        assert_eq!(
-            parsed.mcp_config(),
-            Some(Path::new("/tmp/.mcp.json"))
-        );
+        assert_eq!(parsed.mcp_config(), Some(Path::new("/tmp/.mcp.json")));
         assert!(parsed.skills_dir().is_none());
     }
 

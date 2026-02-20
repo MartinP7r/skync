@@ -260,11 +260,7 @@ fn scan_for_skills(dir: &Path, source_name: &str) -> Result<Vec<DiscoveredSkill>
                     });
                 }
                 Err(e) => {
-                    eprintln!(
-                        "warning: skipping skill in {}: {}",
-                        skill_dir.display(),
-                        e
-                    );
+                    eprintln!("warning: skipping skill in {}: {}", skill_dir.display(), e);
                 }
             }
         }
