@@ -9,7 +9,7 @@
 - **Optional git init for library**: Ask during `skync init` whether to initialize a git repo in the library directory for change tracking across syncs
 - **Expand wizard auto-discovery**: Add `~/.copilot/skills/`, `.github/skills/`, `$HOME/.agents/skills/`, `.cursor/`, `.gemini/antigravity/` to the wizard's known source locations
 - **Fix `installed_plugins.json` v2 parsing**: Current parser expects a flat JSON array (v1); v2 wraps plugins in `{ "version": 2, "plugins": { "name@registry": [...] } }` — discovery silently finds nothing. Support both formats going forward.
-- **Finalize tool name**: Decide on final name before v0.2, when the name gets written into targets' MCP configs and becomes harder to change.
+- **Finalize tool name**: Decide on final name before v0.2, when the name gets written into targets' MCP configs and becomes harder to change. Leading candidate: **skillet**.
 - **Improve doc comments for `cargo doc`**: Add module-level `//!` docs, expand struct/function docs, add `# Examples` to key public APIs.
 - **GitHub Pages deployment**: Add CI workflow to build and deploy mdBook + `cargo doc` to GitHub Pages.
 
