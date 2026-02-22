@@ -1,4 +1,4 @@
-//! Interactive `skillet init` setup wizard using dialoguer. Auto-discovers known source locations.
+//! Interactive `tome init` setup wizard using dialoguer. Auto-discovers known source locations.
 
 use anyhow::{Context, Result};
 use console::style;
@@ -13,14 +13,14 @@ use crate::config::{
 /// Run the interactive setup wizard.
 pub fn run(dry_run: bool) -> Result<Config> {
     println!();
-    println!("{}", style("Welcome to skillet setup!").bold().cyan());
+    println!("{}", style("Welcome to tome setup!").bold().cyan());
     println!("This wizard will help you configure skill sources and targets.");
     println!();
 
     println!("{}", style("How it works:").bold());
-    println!("  Skillet uses symlinks — your original files are never moved or copied.");
+    println!("  Tome uses symlinks — your original files are never moved or copied.");
     println!("  The library and targets contain links pointing back to where your skills");
-    println!("  actually live. Removing skillet leaves all your original files untouched.");
+    println!("  actually live. Removing tome leaves all your original files untouched.");
     println!();
 
     // Step 1: Discover and select sources
@@ -89,21 +89,27 @@ fn configure_sources() -> Result<Vec<Source>> {
     let mut sources = Vec::new();
 
     if !known_sources.is_empty() {
-        println!("Found skills in these locations:");
         let labels: Vec<String> = known_sources
             .iter()
             .map(|s| format!("{} ({})", s.path.display(), s.source_type))
             .collect();
 
         let selections = MultiSelect::new()
-            .with_prompt("Select sources to include")
+            .with_prompt("Found skills in these locations — select sources to include")
             .items(&labels)
             .defaults(&vec![true; known_sources.len()])
+            .report(false)
             .interact()?;
 
-        for idx in selections {
-            sources.push(known_sources[idx].clone());
+        for idx in &selections {
+            sources.push(known_sources[*idx].clone());
         }
+
+        println!(
+            "  {} {} source(s) selected",
+            style("✓").green(),
+            selections.len()
+        );
     }
 
     // Offer to add custom paths
@@ -138,7 +144,7 @@ fn configure_library() -> Result<PathBuf> {
 
     let default = dirs::home_dir()
         .context("could not determine home directory")?
-        .join(".local/share/skillet/skills");
+        .join(".local/share/tome/skills");
 
     let options = vec![
         format!("{} (default)", default.display()),
